@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru" data-bs-theme="dark">
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planet Animal - Мир животных</title>
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+    <style>
+        .hero-section {
+            background: linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.3)),
+                        url("{% static 'images/forest-bg.jpg' %}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Улучшаем читаемость текста на фоне */
+        .text-white {
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+        }
+
+        .nav-masthead .nav-link {
+            color: rgba(255, 255, 255, 0.85);
+            border-bottom: .25rem solid transparent;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+        }
+
+        .nav-masthead .nav-link:hover,
+        .nav-masthead .nav-link:focus {
+            border-bottom-color: rgba(255, 255, 255, 0.5);
+            color: white;
+        }
+
+        .nav-masthead .active {
+            color: #fff;
+            border-bottom-color: #fff;
+        }
+
+        .btn-animal {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .btn-animal:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(39, 174, 96, 0.4);
+        }
+
+        /* Стили для карточек с животными */
+        .animal-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #333;
+        }
+
+        .animal-card .text-muted {
+            color: #6c757d !important;
+        }
+    </style>
+</head>
+<body>
+<div class="hero-section">
+    <header class="mb-auto">
+        <div class="container">
+            <div class="d-flex flex-wrap justify-content-between align-items-center py-3">
+                <h3 class="text-white fw-bold">
+                    🐾 Planet Animal
+                </h3>
+                <nav class="nav nav-masthead">
+                    <a class="nav-link fw-bold" href="{% url 'main:index' %}">
+                        Главная
+                    </a>
+                    <a class="nav-link fw-bold" href="{% url 'main:category' %}">
+                        Категории
+                    </a>
+                    <a class="nav-link fw-bold" href="{% url 'main:create_post' %}">
+                        Создать пост
+                    </a>
+                    <a class="nav-link fw-bold" href="{% url 'main:about' %}">
+                        О проекте
+                    </a>
+                    {% if user.is_authenticated %}
+                    <a class="nav-link fw-bold" href="{% url 'users:profile' %}">
+                        👤 {{ user.username }}
+                    </a>
+                    <a class="nav-link fw-bold" href="{% url 'users:logout' %}">
+                        Выйти
+                    </a>
+                    {% else %}
+                    <a class="nav-link fw-bold" href="{% url 'users:login' %}">
+                        Войти
+                    </a>
+                    <a class="nav-link fw-bold" href="{% url 'users:register' %}">
+                        Регистрация
+                    </a>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    {% block content %}
+    {% endblock %}
+
+    <footer class="mt-auto py-4">
+        <div class="container">
+            <p class="text-white-50 mb-0">
+                © 2025 Planet Animal. Открой для себя удивительный мир животных
+            </p>
+        </div>
+    </footer>
+</div>
+
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

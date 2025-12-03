@@ -1,0 +1,128 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block content %}
+<main class="min-vh-100">
+    <!-- Hero секция со сказочным лесом -->
+    <section class="py-5 text-center text-white" style="
+        background: linear-gradient(135deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.05) 100%),
+                    url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+        background-size: cover;
+        background-position: center 30%;
+        background-attachment: fixed;
+    ">
+        <div class="container py-5">
+            <div class="row py-lg-5">
+                <div class="col-lg-8 col-md-10 mx-auto">
+                    <h1 class="display-4 fw-bold mb-4" style="text-shadow: 2px 2px 8px rgba(0,0,0,0.6);">
+                        🌿 Категории животных
+                    </h1>
+                    <p class="lead fs-3 mb-4" style="text-shadow: 1px 1px 4px rgba(0,0,0,0.5);">
+                        Путешествие в мир дикой природы
+                    </p>
+                    <p class="fs-5 mb-5 opacity-90" style="text-shadow: 1px 1px 3px rgba(0,0,0,0.4);">
+                        Откройте для себя удивительное разнообразие животного мира
+                    </p>
+                    <div class="d-flex gap-3 justify-content-center flex-wrap">
+                        <a href="#categories" class="btn btn-success btn-lg px-4 py-2 fw-bold"
+                           style="background: linear-gradient(45deg, #27ae60, #2ecc71); border: none; box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);">
+                            🗺️ Исследовать категории
+                        </a>
+                        <a href="{% url 'main:index' %}" class="btn btn-outline-light btn-lg px-4 py-2"
+                           style="box-shadow: 0 4px 15px rgba(255,255,255,0.2);">
+                            🏠 На главную
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Сетка категорий с темным фоном -->
+    <section id="categories" class="py-5" style="background: rgba(0, 0, 0, 0.8);">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="display-5 fw-bold text-white mb-3">Все категории</h2>
+                <p class="lead text-white-50">Выберите интересующую вас категорию для изучения</p>
+            </div>
+
+            <div class="row g-4">
+                {% for category in categories %}
+                <div class="col-xl-4 col-lg-6 col-md-6">
+                    <div class="card category-card h-100 border-0 shadow-lg overflow-hidden"
+                         style="background: rgba(60, 60, 60, 0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; transition: all 0.3s ease;">
+                        {% if category.image_category %}
+                        <div class="category-image" style="height: 250px; overflow: hidden;">
+                            <img src="{{ category.image_category.url }}"
+                                 class="card-img-top w-100 h-100"
+                                 alt="{{ category.name }}"
+                                 style="object-fit: cover; transition: transform 0.3s ease;">
+                        </div>
+                        {% endif %}
+
+                        <div class="card-body d-flex flex-column p-4">
+                            <h5 class="card-title fw-bold text-white mb-3 fs-4">
+                                {{ category.name }}
+                            </h5>
+                            <p class="card-text text-white-50 flex-grow-1 mb-4">
+                                {{ category.description|truncatewords:25 }}
+                            </p>
+
+                            <div class="d-flex justify-content-between align-items-center mt-auto">
+                                <div class="d-flex gap-3 text-muted small">
+                                    <span>📅 {{ category.publish|date:"d.m.Y" }}</span>
+                                    <span>👁️ {{ category.views }}</span>
+                                </div>
+                                <a href="{% url 'main:category_detail' category.slug %}"
+                                   class="btn btn-outline-light btn-sm px-4 py-2"
+                                   style="border-radius: 25px; transition: all 0.3s ease;">
+                                    Исследовать →
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <div class="text-white-50">
+                        <h4>🦘 Категории скоро появятся</h4>
+                        <p>Мы активно работаем над наполнением базы животных</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </section>
+</main>
+
+<style>
+    .category-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.5) !important;
+        border-color: rgba(255,255,255,0.2) !important;
+    }
+
+    .category-card:hover .category-image img {
+        transform: scale(1.1);
+    }
+
+    .btn-outline-light:hover {
+        background: rgba(255,255,255,0.1);
+        transform: translateY(-2px);
+    }
+
+    /* Красивые градиенты для разных категорий при наведении */
+    .category-card:nth-child(3n+1):hover {
+        border-color: #4ecdc4 !important;
+    }
+
+    .category-card:nth-child(3n+2):hover {
+        border-color: #45b7d1 !important;
+    }
+
+    .category-card:nth-child(3n+3):hover {
+        border-color: #96ceb4 !important;
+    }
+</style>
+{% endblock %}

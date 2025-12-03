@@ -1,0 +1,33 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card" style="background: rgba(60, 60, 60, 0.95);">
+                <div class="card-body p-4">
+                    <h2 class="text-center text-white mb-4">🔐 Вход</h2>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label text-white">{{ field.label }}</label>
+                            {{ field }}
+                        </div>
+                        {% endfor %}
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Войти</button>
+                            <a href="{% url 'users:register' %}" class="btn btn-outline-light">
+                                Нет аккаунта? Зарегистрироваться
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

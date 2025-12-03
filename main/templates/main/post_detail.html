@@ -1,0 +1,551 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+    .post-detail-bg {
+        background: linear-gradient(135deg, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.4) 100%),
+                    {% if post.cat.background_image and post.cat.background_image.url %}
+                        url('{{ post.cat.background_image.url }}')
+                    {% else %}
+                        url("{% static 'images/category_bg/forest-bg.jpg' %}")
+                    {% endif %};
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        min-height: 100vh;
+        padding: 3rem 0;
+    }
+
+    /* Основные стили для читаемости */
+    .article-content {
+        color: #e8f4fc !important;
+        font-size: 1.15rem;
+        line-height: 1.9;
+        text-align: left;
+        font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        letter-spacing: 0.01em;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    .article-content p {
+        margin-bottom: 1.8rem;
+        text-indent: 1.5em;
+    }
+
+    .article-content p:first-of-type {
+        text-indent: 0;
+        font-size: 1.2rem;
+        color: #ffffff;
+    }
+
+    /* Заголовки внутри статьи */
+    .article-content h2 {
+        color: #a3d5ff;
+        margin-top: 3rem;
+        margin-bottom: 1.5rem;
+        font-weight: 700;
+        font-size: 1.8rem;
+        border-bottom: 2px solid rgba(163, 213, 255, 0.3);
+        padding-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Карточка с текстом */
+    .post-content-card {
+        background: rgba(15, 30, 40, 0.85) !important;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Стили для кликабельного изображения */
+    .clickable-image {
+        cursor: zoom-in;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .clickable-image:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .clickable-image::after {
+        content: '🔍 Нажмите для увеличения';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+        color: white;
+        padding: 1.5rem 1rem 0.5rem;
+        text-align: center;
+        font-size: 0.9rem;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .clickable-image:hover::after {
+        opacity: 1;
+    }
+
+    /* Модальное окно для фото */
+    .image-modal {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.95);
+        backdrop-filter: blur(10px);
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .modal-content {
+        margin: auto;
+        display: block;
+        max-width: 95%;
+        max-height: 90vh;
+        animation: zoomIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 10px;
+        box-shadow: 0 0 50px rgba(13, 202, 240, 0.3);
+    }
+
+    @keyframes zoomIn {
+        from {
+            transform: scale(0.7);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .close-modal {
+        position: absolute;
+        top: 20px;
+        right: 30px;
+        color: #fff;
+        font-size: 40px;
+        font-weight: bold;
+        cursor: pointer;
+        z-index: 10000;
+        transition: all 0.3s ease;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(5px);
+    }
+
+    .close-modal:hover {
+        color: #0dcaf0;
+        transform: rotate(90deg);
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .modal-controls {
+        position: fixed;
+        bottom: 30px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        z-index: 10000;
+    }
+
+    .modal-btn {
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        color: white;
+        padding: 12px 25px;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .modal-btn:hover {
+        background: rgba(13, 202, 240, 0.7);
+        transform: translateY(-3px);
+    }
+
+    .image-caption {
+        position: fixed;
+        bottom: 100px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        color: white;
+        font-size: 1.2rem;
+        padding: 15px;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        animation: slideUp 0.3s ease-out;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    /* Эффект для нажатия на фото */
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(13, 202, 240, 0.7); }
+        70% { box-shadow: 0 0 0 20px rgba(13, 202, 240, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(13, 202, 240, 0); }
+    }
+
+    .pulse-effect {
+        animation: pulse 1s;
+    }
+</style>
+
+<div class="post-detail-bg">
+    <div class="container">
+        <div class="row g-4 justify-content-center">
+            {% if post.image %}
+            <div class="col-12 col-md-5">
+                <div class="post-content-card p-0 overflow-hidden mb-4 mb-md-0">
+                    <!-- Кликабельное изображение -->
+                    <div class="clickable-image" id="clickableImage">
+                        <div class="ratio ratio-4x3">
+                            <img src="{{ post.image.url }}"
+                                 class="card-img-top object-fit-cover"
+                                 alt="{{ post.title }}"
+                                 style="border-radius: 20px;"
+                                 data-image-src="{{ post.image.url }}"
+                                 data-image-title="{{ post.title }}">
+                        </div>
+                        <div class="card-body p-4 bg-dark bg-opacity-50">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="text-info mb-1">🐾 Вид животного</h6>
+                                    <p class="text-white fw-bold mb-0 fs-5">{{ post.name_animal|default:post.title }}</p>
+                                </div>
+                                <div class="text-end">
+                                    <h6 class="text-info mb-1">👁️ Просмотры</h6>
+                                    <p class="text-white fw-bold mb-0 fs-5">{{ post.views }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="col-12 {% if post.image %}col-md-7{% else %}col-lg-10{% endif %}">
+                <article class="post-content-card p-4 p-lg-5">
+                    <!-- Остальной контент статьи (оставляем как было) -->
+                    <header class="mb-5 pb-4 border-bottom border-info border-opacity-25">
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="flex-grow-1">
+                                <h1 class="display-6 fw-bold text-white mb-3">{{ post.title }}</h1>
+                                {% if post.name_animal and post.name_animal != post.title %}
+                                <div class="d-inline-block bg-info bg-opacity-10 px-3 py-2 rounded-3 mb-3">
+                                    <span class="text-info fw-bold">Вид:</span>
+                                    <span class="text-white ms-2 fs-5">{{ post.name_animal }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-3 text-white-75 mt-3">
+                            <span class="d-flex align-items-center gap-2 bg-dark bg-opacity-25 px-3 py-2 rounded-pill">
+                                <i class="bi bi-calendar3 text-info"></i>
+                                <span>{{ post.publish|date:"d.m.Y" }}</span>
+                            </span>
+                            <span class="d-flex align-items-center gap-2 bg-dark bg-opacity-25 px-3 py-2 rounded-pill">
+                                <i class="bi bi-tag text-info"></i>
+                                <span>{{ post.cat.name }}</span>
+                            </span>
+                        </div>
+                    </header>
+
+                    <section class="mb-5">
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <div class="bg-info bg-opacity-20 p-3 rounded-circle">
+                                <i class="bi bi-file-text-fill text-info fs-4"></i>
+                            </div>
+                            <h2 class="h3 fw-bold text-white mb-0">📋 Подробное описание</h2>
+                        </div>
+
+                        <div class="article-content px-2">
+                            {{ post.body|linebreaks }}
+                        </div>
+                    </section>
+
+                    {% if post.tags.all %}
+                    <section class="mb-5">
+                        <h3 class="h4 fw-bold text-white mb-3">🏷️ Теги</h3>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for tag in post.tags.all %}
+                            <span class="badge bg-gradient bg-info bg-opacity-25 text-white border border-info border-opacity-50 fs-6 py-2 px-3 rounded-pill">
+                                <i class="bi bi-tag-fill me-1"></i>{{ tag.name }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </section>
+                    {% endif %}
+
+                    <section class="mt-5 pt-4 border-top border-info border-opacity-25">
+                        <div class="d-flex gap-3 flex-wrap">
+                            <a href="{% url 'main:category_detail' post.cat.slug %}"
+                               class="btn btn-lg px-4 py-3 d-flex align-items-center gap-2"
+                               style="background: linear-gradient(135deg, #0dcaf0, #0a8ea0); border: none;">
+                                <i class="bi bi-arrow-left"></i>
+                                <span>Назад к категории "{{ post.cat.name }}"</span>
+                            </a>
+                            <a href="{% url 'main:category' %}"
+                               class="btn btn-outline-info btn-lg px-4 py-3 d-flex align-items-center gap-2">
+                                <i class="bi bi-folder2-open"></i>
+                                <span>Все категории</span>
+                            </a>
+                        </div>
+                    </section>
+                </article>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно для полноразмерного изображения -->
+<div id="imageModal" class="image-modal">
+    <span class="close-modal">&times;</span>
+    <div class="loading" id="modalLoading">Загрузка...</div>
+    <img class="modal-content" id="modalImage">
+    <div class="image-caption" id="imageCaption"></div>
+    <div class="modal-controls">
+        <button class="modal-btn" id="zoomInBtn">
+            <i class="bi bi-zoom-in"></i> Увеличить
+        </button>
+        <button class="modal-btn" id="zoomOutBtn">
+            <i class="bi bi-zoom-out"></i> Уменьшить
+        </button>
+        <button class="modal-btn" id="downloadBtn">
+            <i class="bi bi-download"></i> Скачать
+        </button>
+    </div>
+</div>
+
+<!-- Подключаем Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Элементы
+        const clickableImage = document.getElementById('clickableImage');
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        const captionText = document.getElementById('imageCaption');
+        const closeModal = document.querySelector('.close-modal');
+        const modalLoading = document.getElementById('modalLoading');
+
+        // Кнопки управления
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        let currentScale = 1;
+        const SCALE_STEP = 0.2;
+        const MIN_SCALE = 0.5;
+        const MAX_SCALE = 3;
+
+        // Плавное появление текста статьи
+        const articleContent = document.querySelector('.article-content');
+        if (articleContent) {
+            articleContent.style.opacity = '0';
+            articleContent.style.transform = 'translateY(20px)';
+
+            setTimeout(() => {
+                articleContent.style.transition = 'opacity 0.8s ease, transform 0.8s ease';
+                articleContent.style.opacity = '1';
+                articleContent.style.transform = 'translateY(0)';
+            }, 300);
+        }
+
+        // Обработчик клика по изображению
+        if (clickableImage) {
+            clickableImage.addEventListener('click', function(e) {
+                // Эффект пульсации
+                this.classList.add('pulse-effect');
+                setTimeout(() => {
+                    this.classList.remove('pulse-effect');
+                }, 1000);
+
+                // Показать модальное окно
+                modal.style.display = "block";
+                modalLoading.style.display = "block";
+                modalImg.style.display = "none";
+
+                // Получить данные изображения
+                const img = this.querySelector('img');
+                const imageSrc = img.dataset.imageSrc;
+                const imageTitle = img.dataset.imageTitle || "{{ post.title }}";
+
+                // Загрузить изображение
+                modalImg.onload = function() {
+                    modalLoading.style.display = "none";
+                    modalImg.style.display = "block";
+                    currentScale = 1;
+                    modalImg.style.transform = `scale(${currentScale})`;
+
+                    // Установить подпись
+                    captionText.textContent = imageTitle;
+                    captionText.style.display = "block";
+                };
+
+                modalImg.onerror = function() {
+                    modalLoading.textContent = "Ошибка загрузки изображения";
+                    modalLoading.style.color = "#ff6b6b";
+                };
+
+                modalImg.src = imageSrc;
+                modalImg.alt = imageTitle;
+
+                // Предотвращаем прокрутку страницы
+                document.body.style.overflow = "hidden";
+            });
+        }
+
+        // Закрытие модального окна
+        closeModal.addEventListener('click', function() {
+            closeImageModal();
+        });
+
+        // Закрытие по клику вне изображения
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                closeImageModal();
+            }
+        });
+
+        // Закрытие по Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === "Escape" && modal.style.display === "block") {
+                closeImageModal();
+            }
+        });
+
+        // Управление масштабом
+        zoomInBtn.addEventListener('click', function() {
+            if (currentScale < MAX_SCALE) {
+                currentScale += SCALE_STEP;
+                updateImageScale();
+            }
+        });
+
+        zoomOutBtn.addEventListener('click', function() {
+            if (currentScale > MIN_SCALE) {
+                currentScale -= SCALE_STEP;
+                updateImageScale();
+            }
+        });
+
+        // Скачивание изображения
+        downloadBtn.addEventListener('click', function() {
+            if (modalImg.src) {
+                const link = document.createElement('a');
+                link.href = modalImg.src;
+                link.download = '{{ post.title|slugify }}.jpg';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        });
+
+        // Масштабирование колесиком мыши
+        modalImg.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            if (e.deltaY < 0 && currentScale < MAX_SCALE) {
+                currentScale += SCALE_STEP * 0.5;
+            } else if (e.deltaY > 0 && currentScale > MIN_SCALE) {
+                currentScale -= SCALE_STEP * 0.5;
+            }
+            updateImageScale();
+        });
+
+        // Перетаскивание изображения
+        let isDragging = false;
+        let startX, startY, translateX = 0, translateY = 0;
+
+        modalImg.addEventListener('mousedown', function(e) {
+            if (currentScale > 1) {
+                isDragging = true;
+                startX = e.clientX - translateX;
+                startY = e.clientY - translateY;
+                modalImg.style.cursor = 'grabbing';
+            }
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (!isDragging) return;
+            e.preventDefault();
+            translateX = e.clientX - startX;
+            translateY = e.clientY - startY;
+            modalImg.style.transform = `scale(${currentScale}) translate(${translateX}px, ${translateY}px)`;
+        });
+
+        document.addEventListener('mouseup', function() {
+            isDragging = false;
+            modalImg.style.cursor = 'grab';
+        });
+
+        // Функции
+        function closeImageModal() {
+            modal.style.display = "none";
+            captionText.style.display = "none";
+            document.body.style.overflow = "auto";
+
+            // Сброс трансформаций
+            currentScale = 1;
+            translateX = 0;
+            translateY = 0;
+            modalImg.style.transform = `scale(1) translate(0, 0)`;
+        }
+
+        function updateImageScale() {
+            modalImg.style.transform = `scale(${currentScale}) translate(${translateX}px, ${translateY}px)`;
+            modalImg.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        }
+
+        // Инициализация курсора для перетаскивания
+        modalImg.style.cursor = 'grab';
+    });
+</script>
+{% endblock %}

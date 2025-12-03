@@ -1,0 +1,696 @@
+{% extends 'main/base.html' %}
+
+{% block content %}
+
+<!-- Космический анимированный фон -->
+<div class="cosmic-bg">
+    <div class="stars-container" id="starsContainer"></div>
+    <div class="shooting-stars" id="shootingStars"></div>
+    <div class="nebula-overlay"></div>
+</div>
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            <!-- Анимированная карточка -->
+            <div class="card cosmic-card">
+                <!-- Анимированный хедер -->
+                <div class="card-header cosmic-header">
+                    <div class="header-content">
+                        <div class="floating-icons">
+                            <span class="icon-1">🐾</span>
+                            <span class="icon-2">📝</span>
+                            <span class="icon-3">✨</span>
+                        </div>
+                        <h1 class="cosmic-title">
+                            <span class="title-text">Создание нового поста</span>
+                            <div class="title-underline"></div>
+                        </h1>
+                        <p class="cosmic-subtitle">Заполните информацию о животном</p>
+                    </div>
+                </div>
+
+                <!-- Тело формы -->
+                <div class="card-body cosmic-body">
+                    <form method="post" enctype="multipart/form-data" class="cosmic-form">
+                        {% csrf_token %}
+
+                        <div class="form-grid">
+                            {% for field in form %}
+                            <div class="form-section" style="animation-delay: {{ forloop.counter0|add:1 }}00ms">
+                                <!-- Лейбл с иконкой -->
+                                <label for="{{ field.id_for_label }}" class="cosmic-label">
+                                    <span class="label-icon">
+                                        {% if field.name == 'name_animal' %}🐾
+                                        {% elif field.name == 'title' %}📝
+                                        {% elif field.name == 'body' %}📄
+                                        {% elif field.name == 'short_description' %}ℹ️
+                                        {% elif field.name == 'email' %}📧
+                                        {% elif field.name == 'image' %}🖼️
+                                        {% elif field.name == 'cat' %}📂
+                                        {% elif field.name == 'tags' %}🏷️
+                                        {% elif field.name == 'is_published' %}✅
+                                        {% else %}⚡{% endif %}
+                                    </span>
+                                    {{ field.label }}
+                                    {% if field.field.required %}
+                                    <span class="required-star">*</span>
+                                    {% endif %}
+                                </label>
+
+                                <!-- Поле ввода -->
+                                <div class="field-container">
+                                    {% if field.name == 'image' %}
+                                    <div class="file-upload-wrapper">
+                                        {{ field }}
+                                        <div class="file-upload-display">
+                                            <div class="upload-icon">📁</div>
+                                            <div class="upload-text">
+                                                <span class="main-text">Выберите изображение</span>
+                                                <span class="sub-text">PNG, JPG, JPEG до 5MB</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% elif field.name == 'is_published' %}
+                                    <label class="toggle-switch">
+                                        {{ field }}
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-text">Опубликовать</span>
+                                    </label>
+                                    {% else %}
+                                    <div class="input-wrapper">
+                                        {{ field }}
+                                        <div class="field-focus-border"></div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Вспомогательный текст -->
+                                {% if field.help_text %}
+                                <div class="cosmic-help">
+                                    <span class="help-icon">💡</span>
+                                    {{ field.help_text }}
+                                </div>
+                                {% endif %}
+
+                                <!-- Ошибки -->
+                                {% if field.errors %}
+                                <div class="cosmic-error">
+                                    <span class="error-icon">⚠️</span>
+                                    <div class="error-messages">
+                                        {% for error in field.errors %}
+                                        <span class="error-message">{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Кнопки действий -->
+                        <div class="form-actions" style="animation-delay: 800ms">
+                            <div class="action-buttons">
+                                <a href="{% url 'main:index' %}" class="btn-cosmic btn-cancel">
+                                    <span class="btn-icon">←</span>
+                                    <span class="btn-text">Вернуться</span>
+                                </a>
+                                <button type="submit" class="btn-cosmic btn-submit">
+                                    <span class="btn-text">Создать пост</span>
+                                    <span class="btn-icon">🚀</span>
+                                    <div class="btn-shine"></div>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Космический фон */
+    .cosmic-bg {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #0a0f2b 0%, #1a1f4b 30%, #0f1438 70%, #050823 100%);
+        z-index: -1;
+        overflow: hidden;
+    }
+
+    /* Контейнер для звезд */
+    .stars-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Звезды */
+    .star {
+        position: absolute;
+        background: white;
+        border-radius: 50%;
+        animation: starTwinkle var(--duration) infinite ease-in-out;
+    }
+
+    /* Падающие звезды */
+    .shooting-star {
+        position: absolute;
+        width: 2px;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, white, transparent);
+        animation: shootingStar var(--duration) linear infinite;
+        opacity: 0;
+    }
+
+    .shooting-star::before {
+        content: '';
+        position: absolute;
+        width: 100px;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+        filter: blur(1px);
+    }
+
+    /* Туманность */
+    .nebula-overlay {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background:
+            radial-gradient(circle at 20% 20%, rgba(74, 124, 74, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(100, 200, 255, 0.05) 0%, transparent 50%),
+            radial-gradient(circle at 40% 60%, rgba(255, 100, 255, 0.03) 0%, transparent 50%);
+        animation: nebulaFloat 30s infinite alternate ease-in-out;
+    }
+
+    /* Космическая карточка */
+    .cosmic-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(40px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 30px;
+        box-shadow:
+            0 25px 50px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        overflow: hidden;
+        position: relative;
+        animation: cardFloat 6s ease-in-out infinite;
+    }
+
+    .cosmic-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(74, 124, 74, 0.5), transparent);
+    }
+
+    /* Хедер */
+    .cosmic-header {
+        background: linear-gradient(135deg, rgba(45, 90, 45, 0.3) 0%, rgba(74, 124, 74, 0.2) 100%);
+        border: none;
+        padding: 3rem 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .floating-icons {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+    }
+
+    .floating-icons span {
+        display: block;
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        animation: floatIcon 3s infinite ease-in-out;
+    }
+
+    .floating-icons .icon-1 { animation-delay: 0s; }
+    .floating-icons .icon-2 { animation-delay: 1s; }
+    .floating-icons .icon-3 { animation-delay: 2s; }
+
+    .cosmic-title {
+        color: white;
+        text-align: center;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+
+    .title-text {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #4a7c4a, #8bc34a, #4a7c4a);
+        background-size: 200% 200%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: titleShine 3s ease-in-out infinite;
+    }
+
+    .title-underline {
+        width: 100px;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #4a7c4a, transparent);
+        margin: 1rem auto;
+        border-radius: 2px;
+    }
+
+    .cosmic-subtitle {
+        color: rgba(255, 255, 255, 0.7);
+        text-align: center;
+        font-size: 1.1rem;
+    }
+
+    /* Тело формы */
+    .cosmic-body {
+        padding: 3rem;
+    }
+
+    .form-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .form-section {
+        position: relative;
+        animation: slideInUp 0.8s ease-out both;
+    }
+
+    /* Стили лейблов */
+    .cosmic-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: white;
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .label-icon {
+        font-size: 1.3rem;
+        transition: transform 0.3s ease;
+    }
+
+    .required-star {
+        color: #ff6b6b;
+        margin-left: 4px;
+    }
+
+    /* Контейнеры полей */
+    .field-container {
+        position: relative;
+    }
+
+    .input-wrapper {
+        position: relative;
+    }
+
+    /* Стили полей ввода */
+    .cosmic-form input:not([type="checkbox"]):not([type="file"]),
+    .cosmic-form select,
+    .cosmic-form textarea {
+        width: 100%;
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        color: white;
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        resize: vertical;
+    }
+
+    .cosmic-form input:focus,
+    .cosmic-form select:focus,
+    .cosmic-form textarea:focus {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: #4a7c4a;
+        box-shadow:
+            0 0 0 4px rgba(74, 124, 74, 0.1),
+            0 10px 30px rgba(0, 0, 0, 0.2);
+        transform: translateY(-2px);
+        outline: none;
+    }
+
+    .field-focus-border {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #4a7c4a, #8bc34a);
+        transition: all 0.3s ease;
+        transform: translateX(-50%);
+    }
+
+    .cosmic-form input:focus ~ .field-focus-border,
+    .cosmic-form select:focus ~ .field-focus-border,
+    .cosmic-form textarea:focus ~ .field-focus-border {
+        width: 100%;
+    }
+
+    /* Стили для файлового инпута */
+    .file-upload-wrapper {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .file-upload-wrapper input[type="file"] {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 2;
+    }
+
+    .file-upload-display {
+        background: rgba(255, 255, 255, 0.05);
+        border: 2px dashed rgba(255, 255, 255, 0.2);
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .file-upload-wrapper:hover .file-upload-display {
+        border-color: #4a7c4a;
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .upload-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.7;
+    }
+
+    .main-text {
+        display: block;
+        color: white;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .sub-text {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 0.9rem;
+    }
+
+    /* Тоггл свитч */
+    .toggle-switch {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        cursor: pointer;
+    }
+
+    .toggle-switch input {
+        display: none;
+    }
+
+    .toggle-slider {
+        width: 60px;
+        height: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .toggle-slider::before {
+        content: '';
+        position: absolute;
+        width: 26px;
+        height: 26px;
+        background: white;
+        border-radius: 50%;
+        top: 2px;
+        left: 2px;
+        transition: all 0.3s ease;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+        background: #4a7c4a;
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+        transform: translateX(30px);
+    }
+
+    .toggle-text {
+        color: white;
+        font-weight: 500;
+    }
+
+    /* Вспомогательный текст и ошибки */
+    .cosmic-help {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+
+    .cosmic-error {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #ff6b6b;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+        padding: 0.75rem;
+        background: rgba(255, 107, 107, 0.1);
+        border-radius: 10px;
+        border-left: 3px solid #ff6b6b;
+    }
+
+    /* Кнопки */
+    .form-actions {
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        animation: slideInUp 0.8s ease-out both;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+    }
+
+    .btn-cosmic {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 2rem;
+        border: none;
+        border-radius: 15px;
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-cancel {
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-cancel:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #4a7c4a, #5d995d);
+        color: white;
+        position: relative;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 35px rgba(74, 124, 74, 0.4);
+    }
+
+    .btn-shine {
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.5s;
+    }
+
+    .btn-submit:hover .btn-shine {
+        left: 100%;
+    }
+
+    /* Анимации */
+    @keyframes starTwinkle {
+        0%, 100% {
+            opacity: 0.3;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+    }
+
+    @keyframes shootingStar {
+        0% {
+            transform: translateX(-100px) translateY(-100px) rotate(45deg);
+            opacity: 0;
+        }
+        10% {
+            opacity: 1;
+        }
+        20% {
+            transform: translateX(200px) translateY(200px) rotate(45deg);
+            opacity: 0;
+        }
+        100% {
+            opacity: 0;
+        }
+    }
+
+    @keyframes nebulaFloat {
+        0% {
+            transform: translateX(-20px) translateY(-10px) scale(1);
+        }
+        100% {
+            transform: translateX(20px) translateY(10px) scale(1.05);
+        }
+    }
+
+    @keyframes cardFloat {
+        0%, 100% {
+            transform: translateY(0px);
+        }
+        50% {
+            transform: translateY(-10px);
+        }
+    }
+
+    @keyframes floatIcon {
+        0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+        }
+        50% {
+            transform: translateY(-10px) rotate(5deg);
+        }
+    }
+
+    @keyframes titleShine {
+        0%, 100% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .cosmic-body {
+            padding: 2rem 1rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .title-text {
+            font-size: 2rem;
+        }
+    }
+</style>
+
+<script>
+    // Создание звезд для фона
+    function createStars() {
+        const container = document.getElementById('starsContainer');
+        const starCount = 200;
+
+        for (let i = 0; i < starCount; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+
+            const size = Math.random() * 3 + 1;
+            const left = Math.random() * 100;
+            const top = Math.random() * 100;
+            const duration = Math.random() * 4 + 2;
+            const delay = Math.random() * 5;
+
+            star.style.width = `${size}px`;
+            star.style.height = `${size}px`;
+            star.style.left = `${left}%`;
+            star.style.top = `${top}%`;
+            star.style.setProperty('--duration', `${duration}s`);
+            star.style.animationDelay = `${delay}s`;
+
+            container.appendChild(star);
+        }
+    }
+
+    // Создание падающих звезд
+    function createShootingStars() {
+        const container = document.getElementById('shootingStars');
+        const shootingStarCount = 5;
+
+        for (let i = 0; i < shootingStarCount; i++) {
+            const star = document.createElement('div');
+            star.className = 'shooting-star';
+
+            const left = Math.random() * 100;
+            const top = Math.random() * 100;
+            const duration = Math.random() * 10 + 5;
+            const delay = Math.random() * 15;
+
+            star.style.left = `${left}%`;
+            star.style.top = `${top}%`;
+            star.style.setProperty('--duration', `${duration}s`);
+            star.style.animationDelay = `${delay}s`;
+
+            container.appendChild(star);
+        }
+    }
+
+    // Инициализация при загрузке
+    document.addEventListener('DOMContentLoaded', function() {
+        createStars();
+        createShootingStars();
+    });
+</script>
+
+{% endblock %}
